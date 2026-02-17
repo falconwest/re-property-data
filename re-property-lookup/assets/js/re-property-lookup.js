@@ -20,30 +20,45 @@ window.initRePlacesAutocomplete = function () {
     var input = document.getElementById( 're-plu-address' );
     if ( ! input ) { return; }
 
-    var autocomplete = new google.maps.places.Autocomplete( input, {
-        types:                [ 'address' ],
-        componentRestrictions: { country: 'us' },
-        fields:               [ 'formatted_address' ],
-    } );
+    try {
+        var autocomplete = new google.maps.places.Autocomplete( input, {
+            types:                 [ 'address' ],
+            componentRestrictions: { country: 'us' },
+            fields:                [ 'formatted_address' ],
+        } );
 
-    /* When a suggestion is chosen, write the formatted address into the field */
-    autocomplete.addListener( 'place_changed', function () {
-        var place = autocomplete.getPlace();
-        if ( place && place.formatted_address ) {
-            input.value = place.formatted_address;
-            /* Remove the override state if the user picks a Maps suggestion */
-            if ( window.rePluOverrideActive ) {
-                window.rePluDisableOverride();
+        /* When a suggestion is chosen, write the formatted address into the field */
+        autocomplete.addListener( 'place_changed', function () {
+            var place = autocomplete.getPlace();
+            if ( place && place.formatted_address ) {
+                input.value = place.formatted_address;
+                /* Remove override state if the user picks a Maps suggestion */
+                if ( window.rePluOverrideActive ) {
+                    window.rePluDisableOverride();
+                }
             }
-        }
-    } );
+        } );
 
-    /* Store on window so the override toggle can reach it */
-    window.rePlacesAutocomplete = autocomplete;
+        /* Store on window so the override toggle can reach it */
+        window.rePlacesAutocomplete = autocomplete;
 
-    /* Reveal the override row now that autocomplete is live */
-    var overrideRow = document.getElementById( 're-plu-override-row' );
-    if ( overrideRow ) { overrideRow.style.display = 'flex'; }
+        /* Reveal the override row now that autocomplete is live */
+        var overrideRow = document.getElementById( 're-plu-override-row' );
+        if ( overrideRow ) { overrideRow.style.display = 'flex'; }
+
+    } catch ( e ) {
+        /*
+         * Maps API failed to initialize — most commonly caused by an API key
+         * referrer restriction not including this domain (RefererNotAllowedMapError).
+         *
+         * Degrade gracefully: the input works as plain free-text and the lookup
+         * continues to function normally without autocomplete.
+         *
+         * Fix: add this site's domain to the API key's allowed HTTP referrers
+         * in Google Cloud Console → APIs & Services → Credentials.
+         */
+        console.warn( '[RE Property Lookup] Google Maps autocomplete failed — falling back to plain text input.', e.message || e );
+    }
 };
 
 /* =========================================================================
