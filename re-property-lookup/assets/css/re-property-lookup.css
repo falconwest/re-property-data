@@ -1,0 +1,592 @@
+/* ============================================================
+   RE Property Lookup — Frontend Stylesheet
+   ============================================================ */
+
+/* ---- Custom properties ---- */
+:root {
+  --re-navy:          #1a2e52;
+  --re-blue:          #2563eb;
+  --re-blue-hover:    #1d4ed8;
+  --re-blue-light:    #eff6ff;
+  --re-green:         #16a34a;
+  --re-green-light:   #f0fdf4;
+  --re-amber:         #d97706;
+  --re-amber-light:   #fffbeb;
+  --re-red:           #dc2626;
+  --re-red-light:     #fef2f2;
+  --re-gray-50:       #f8fafc;
+  --re-gray-100:      #f1f5f9;
+  --re-gray-200:      #e2e8f0;
+  --re-gray-400:      #94a3b8;
+  --re-gray-500:      #64748b;
+  --re-gray-700:      #334155;
+  --re-gray-900:      #0f172a;
+  --re-radius:        10px;
+  --re-radius-sm:     6px;
+  --re-shadow:        0 1px 3px 0 rgb(0 0 0 / .10), 0 1px 2px -1px rgb(0 0 0 / .10);
+  --re-shadow-md:     0 4px 6px -1px rgb(0 0 0 / .10), 0 2px 4px -2px rgb(0 0 0 / .10);
+  --re-transition:    150ms cubic-bezier(.4,0,.2,1);
+}
+
+/* ---- Wrapper ---- */
+.re-plu-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 0 40px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  color: var(--re-gray-700);
+  font-size: 15px;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.re-plu-wrap *,
+.re-plu-wrap *::before,
+.re-plu-wrap *::after {
+  box-sizing: inherit;
+}
+
+/* ---- Card ---- */
+.re-plu-card {
+  background: #fff;
+  border: 1px solid var(--re-gray-200);
+  border-radius: var(--re-radius);
+  padding: 24px 28px;
+  margin-bottom: 16px;
+  box-shadow: var(--re-shadow);
+}
+
+.re-plu-card-muted {
+  background: var(--re-gray-50);
+}
+
+/* ---- Toolbar ---- */
+.re-plu-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 18px;
+  border-bottom: 1px solid var(--re-gray-200);
+  margin-bottom: 20px;
+}
+
+.re-plu-toolbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--re-navy);
+}
+
+.re-plu-toolbar-brand svg {
+  width: 22px;
+  height: 22px;
+  color: var(--re-blue);
+}
+
+/* ---- Password card (centered, narrower) ---- */
+.re-plu-password-card {
+  max-width: 420px;
+  margin: 48px auto 0;
+  text-align: center;
+}
+
+.re-plu-header {
+  margin-bottom: 28px;
+}
+
+.re-plu-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: var(--re-blue-light);
+  border-radius: 50%;
+  margin-bottom: 16px;
+  color: var(--re-blue);
+}
+
+.re-plu-logo svg {
+  width: 30px;
+  height: 30px;
+}
+
+.re-plu-title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--re-navy);
+  line-height: 1.3;
+}
+
+.re-plu-subtitle {
+  margin: 0;
+  color: var(--re-gray-500);
+  font-size: 14px;
+}
+
+/* ---- Instructions ---- */
+.re-plu-instructions {
+  margin: 0 0 20px;
+  color: var(--re-gray-500);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---- Form elements ---- */
+.re-plu-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.re-plu-field-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.re-plu-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--re-gray-700);
+  letter-spacing: .01em;
+}
+
+.re-plu-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--re-gray-200);
+  border-radius: var(--re-radius-sm);
+  font-size: 15px;
+  color: var(--re-gray-900);
+  background: #fff;
+  outline: none;
+  transition: border-color var(--re-transition), box-shadow var(--re-transition);
+  line-height: 1.5;
+}
+
+.re-plu-input:focus {
+  border-color: var(--re-blue);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / .12);
+}
+
+.re-plu-input::placeholder {
+  color: var(--re-gray-400);
+}
+
+/* ---- Buttons ---- */
+.re-plu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--re-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--re-transition), color var(--re-transition), box-shadow var(--re-transition);
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.re-plu-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.re-plu-btn-primary {
+  background: var(--re-blue);
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .08);
+}
+
+.re-plu-btn-primary:hover:not(:disabled) {
+  background: var(--re-blue-hover);
+  box-shadow: var(--re-shadow-md);
+}
+
+.re-plu-btn-ghost {
+  background: transparent;
+  color: var(--re-gray-500);
+  border: 1px solid var(--re-gray-200);
+}
+
+.re-plu-btn-ghost:hover:not(:disabled) {
+  background: var(--re-gray-100);
+  color: var(--re-gray-700);
+}
+
+.re-plu-btn-full {
+  width: 100%;
+}
+
+.re-plu-btn-sm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* Platform link buttons */
+.re-plu-platform-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: var(--re-radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none !important;
+  transition: background-color var(--re-transition), box-shadow var(--re-transition);
+  border: 1px solid transparent;
+}
+
+.re-plu-platform-btn:hover {
+  box-shadow: var(--re-shadow-md);
+}
+
+.re-plu-platform-btn.zillow {
+  background: #006aff;
+  color: #fff !important;
+}
+.re-plu-platform-btn.zillow:hover { background: #0055cc; }
+
+.re-plu-platform-btn.redfin {
+  background: #cc0000;
+  color: #fff !important;
+}
+.re-plu-platform-btn.redfin:hover { background: #aa0000; }
+
+.re-plu-platform-btn.loopnet {
+  background: #1a2744;
+  color: #fff !important;
+}
+.re-plu-platform-btn.loopnet:hover { background: #253660; }
+
+/* ---- Search row ---- */
+.re-plu-search-card { padding-bottom: 20px; }
+
+.re-plu-search-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.re-plu-search-action {
+  padding-top: 22px;  /* align with input (label height) */
+  flex-shrink: 0;
+}
+
+/* ---- Platform grid ---- */
+.re-plu-platform-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* ---- Detail grid ---- */
+.re-plu-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.re-plu-detail-cell {
+  background: var(--re-gray-50);
+  border: 1px solid var(--re-gray-200);
+  border-radius: var(--re-radius-sm);
+  padding: 14px 16px;
+}
+
+.re-plu-detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--re-gray-400);
+  margin-bottom: 4px;
+}
+
+.re-plu-detail-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--re-navy);
+  line-height: 1.3;
+}
+
+.re-plu-detail-value.not-available {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--re-gray-400);
+}
+
+/* ---- Section header ---- */
+.re-plu-section-header {
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--re-gray-100);
+  padding-bottom: 12px;
+}
+
+.re-plu-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--re-navy);
+}
+
+.re-plu-section-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--re-blue);
+  flex-shrink: 0;
+}
+
+.re-plu-section-title-sm {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.re-plu-section-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--re-gray-400);
+}
+
+/* ---- Tenants / Square footage ---- */
+.re-plu-api-notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--re-amber-light);
+  border: 1px solid #fde68a;
+  border-radius: var(--re-radius-sm);
+  font-size: 13px;
+  color: var(--re-gray-700);
+  line-height: 1.55;
+}
+
+.re-plu-api-notice-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.re-plu-api-notice strong {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 700;
+  color: var(--re-amber);
+}
+
+/* ---- Permit links ---- */
+.re-plu-permit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.re-plu-permit-list li {
+  display: flex;
+}
+
+.re-plu-permit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  color: var(--re-blue);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 12px;
+  border: 1px solid var(--re-gray-200);
+  border-radius: var(--re-radius-sm);
+  background: #fff;
+  transition: background-color var(--re-transition), border-color var(--re-transition);
+  width: 100%;
+}
+
+.re-plu-permit-link:hover {
+  background: var(--re-blue-light);
+  border-color: #bfdbfe;
+  text-decoration: none;
+}
+
+.re-plu-permit-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.re-plu-permit-badge.city {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.re-plu-permit-badge.national {
+  background: var(--re-gray-100);
+  color: var(--re-gray-500);
+}
+
+.re-plu-permit-badge.foia {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* ---- Notes / data sources ---- */
+.re-plu-notes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.re-plu-notes-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--re-gray-500);
+}
+
+.re-plu-notes-list li::before {
+  content: "ℹ";
+  flex-shrink: 0;
+  color: var(--re-blue);
+  font-style: normal;
+}
+
+.re-plu-sources-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.re-plu-source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  background: var(--re-green-light);
+  color: var(--re-green);
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+}
+
+.re-plu-source-tag::before {
+  content: "✓";
+  font-weight: 700;
+}
+
+/* ---- Message / alert ---- */
+.re-plu-message {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: var(--re-radius-sm);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.re-plu-message:empty { display: none; }
+
+.re-plu-message-error {
+  background: var(--re-red-light);
+  border: 1px solid #fecaca;
+  color: var(--re-red);
+}
+
+.re-plu-message-success {
+  background: var(--re-green-light);
+  border: 1px solid #bbf7d0;
+  color: var(--re-green);
+}
+
+/* ---- Loading spinner ---- */
+.re-plu-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / .4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: re-plu-spin .7s linear infinite;
+}
+
+@keyframes re-plu-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Address banner shown in results ---- */
+.re-plu-address-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--re-navy);
+  padding: 10px 14px;
+  background: var(--re-blue-light);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--re-radius-sm);
+  margin-bottom: 16px;
+}
+
+.re-plu-address-banner svg {
+  color: var(--re-blue);
+  flex-shrink: 0;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .re-plu-search-row {
+    flex-direction: column;
+  }
+  .re-plu-search-action {
+    padding-top: 0;
+    width: 100%;
+  }
+  .re-plu-search-action .re-plu-btn {
+    width: 100%;
+  }
+  .re-plu-card {
+    padding: 18px 16px;
+  }
+  .re-plu-detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .re-plu-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .re-plu-platform-grid {
+    flex-direction: column;
+  }
+  .re-plu-platform-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
