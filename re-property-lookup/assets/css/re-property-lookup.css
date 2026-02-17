@@ -558,6 +558,103 @@
   flex-shrink: 0;
 }
 
+/* ---- Google Maps autocomplete override toggle ---- */
+
+.re-plu-override-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--re-gray-500);
+}
+
+.re-plu-override-label {
+  flex-shrink: 0;
+}
+
+.re-plu-override-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--re-blue);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  line-height: 1;
+}
+
+.re-plu-override-btn:hover {
+  color: var(--re-blue-hover);
+}
+
+.re-plu-override-btn.re-plu-override-restore {
+  color: var(--re-amber);
+}
+
+.re-plu-override-btn.re-plu-override-restore:hover {
+  color: #b45309;
+}
+
+/* Input state when override is active */
+.re-plu-input--override {
+  border-color: var(--re-amber) !important;
+  box-shadow: 0 0 0 3px rgb(217 119 6 / .12) !important;
+}
+
+/* ---- Google Maps .pac-container theming ---- */
+
+/* Suppress the dropdown when override mode is active */
+body.re-plu-override-active .pac-container {
+  display: none !important;
+}
+
+/* Style the dropdown to match our tool's aesthetic */
+.pac-container {
+  border: 1px solid var(--re-gray-200);
+  border-radius: 0 0 var(--re-radius-sm) var(--re-radius-sm);
+  box-shadow: var(--re-shadow-md);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.pac-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-top: 1px solid var(--re-gray-100);
+  color: var(--re-gray-700);
+  line-height: 1.4;
+}
+
+.pac-item:first-child {
+  border-top: none;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background: var(--re-blue-light);
+}
+
+.pac-item-query {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--re-navy);
+}
+
+.pac-icon {
+  display: none; /* Hide the default Google Maps pin icon */
+}
+
+.pac-logo::after {
+  /* Keep the "Powered by Google" footer but make it subtle */
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--re-gray-400);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   .re-plu-search-row {

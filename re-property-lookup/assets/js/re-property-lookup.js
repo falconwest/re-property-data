@@ -2,10 +2,53 @@
  * RE Property Lookup — Frontend JavaScript
  *
  * Handles:
+ *   - Google Maps Places Autocomplete (when API key is configured)
+ *   - Override mode for addresses not found on Google Maps
  *   - Password form submission (AJAX → PHP session)
  *   - Address lookup form submission (AJAX → PHP data fetcher)
  *   - Dynamic results rendering
  */
+
+/* =========================================================================
+ * Google Maps Places Autocomplete
+ *
+ * This function is called as the Maps JS API callback. It must be a global.
+ * When no API key is configured, this function is never called.
+ * ======================================================================= */
+
+window.initRePlacesAutocomplete = function () {
+    var input = document.getElementById( 're-plu-address' );
+    if ( ! input ) { return; }
+
+    var autocomplete = new google.maps.places.Autocomplete( input, {
+        types:                [ 'address' ],
+        componentRestrictions: { country: 'us' },
+        fields:               [ 'formatted_address' ],
+    } );
+
+    /* When a suggestion is chosen, write the formatted address into the field */
+    autocomplete.addListener( 'place_changed', function () {
+        var place = autocomplete.getPlace();
+        if ( place && place.formatted_address ) {
+            input.value = place.formatted_address;
+            /* Remove the override state if the user picks a Maps suggestion */
+            if ( window.rePluOverrideActive ) {
+                window.rePluDisableOverride();
+            }
+        }
+    } );
+
+    /* Store on window so the override toggle can reach it */
+    window.rePlacesAutocomplete = autocomplete;
+
+    /* Reveal the override row now that autocomplete is live */
+    var overrideRow = document.getElementById( 're-plu-override-row' );
+    if ( overrideRow ) { overrideRow.style.display = 'flex'; }
+};
+
+/* =========================================================================
+ * jQuery plugin logic
+ * ======================================================================= */
 ( function ( $ ) {
     'use strict';
 
@@ -87,6 +130,43 @@
         } ).always( function () {
             window.location.reload();
         } );
+    } );
+
+    /* -----------------------------------------------------------------------
+     * Override toggle
+     *
+     * When Google Maps autocomplete is active, team members can click
+     * "Enter manually" to bypass autocomplete for addresses not on Maps.
+     * The toggle suppresses the Google suggestions dropdown via a body class,
+     * adds a visual indicator on the input, and can be reversed.
+     * -------------------------------------------------------------------- */
+
+    window.rePluOverrideActive = false;
+
+    window.rePluEnableOverride = function () {
+        window.rePluOverrideActive = true;
+        $( '#re-plu-address' ).addClass( 're-plu-input--override' );
+        $( 'body' ).addClass( 're-plu-override-active' );
+        $( '#re-plu-override-toggle-btn' ).text( 'Restore autocomplete' ).addClass( 're-plu-override-restore' );
+        $( '#re-plu-override-label' ).text( 'Manual entry active —' );
+        /* Re-focus the input so the team member can start typing immediately */
+        $( '#re-plu-address' ).trigger( 'focus' );
+    };
+
+    window.rePluDisableOverride = function () {
+        window.rePluOverrideActive = false;
+        $( '#re-plu-address' ).removeClass( 're-plu-input--override' );
+        $( 'body' ).removeClass( 're-plu-override-active' );
+        $( '#re-plu-override-toggle-btn' ).text( 'Enter manually' ).removeClass( 're-plu-override-restore' );
+        $( '#re-plu-override-label' ).text( 'Address not on Google Maps?' );
+    };
+
+    $( document ).on( 'click', '#re-plu-override-toggle-btn', function () {
+        if ( window.rePluOverrideActive ) {
+            window.rePluDisableOverride();
+        } else {
+            window.rePluEnableOverride();
+        }
     } );
 
     /* -----------------------------------------------------------------------

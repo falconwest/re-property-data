@@ -51,6 +51,17 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
             </div>
         </div>
 
+        <!--
+            Override row — hidden until initRePlacesAutocomplete() reveals it.
+            If no Maps API key is configured, this row stays hidden permanently.
+        -->
+        <div id="re-plu-override-row" class="re-plu-override-row" style="display:none;" aria-live="polite">
+            <span id="re-plu-override-label" class="re-plu-override-label">Address not on Google Maps?</span>
+            <button type="button" id="re-plu-override-toggle-btn" class="re-plu-override-btn">
+                Enter manually
+            </button>
+        </div>
+
         <div id="re-plu-lookup-error" class="re-plu-message re-plu-message-error" role="alert" style="display:none;"></div>
     </div>
 

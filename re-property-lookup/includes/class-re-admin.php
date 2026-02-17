@@ -90,6 +90,26 @@ class RE_PLU_Admin {
             're-property-lookup',
             're_plu_appearance_section'
         );
+
+        /* ---- Section: Integrations ---- */
+        add_settings_section(
+            're_plu_integrations_section',
+            'Integrations',
+            [ $this, 'section_integrations_description' ],
+            're-property-lookup'
+        );
+
+        register_setting( 're-property-lookup', 're_plu_gmaps_key', [
+            'sanitize_callback' => 'sanitize_text_field',
+        ] );
+
+        add_settings_field(
+            're_plu_gmaps_key',
+            'Google Maps API Key',
+            [ $this, 'field_gmaps_key' ],
+            're-property-lookup',
+            're_plu_integrations_section'
+        );
     }
 
     /* -----------------------------------------------------------------------
@@ -136,6 +156,34 @@ class RE_PLU_Admin {
         $value = get_option( 're_plu_instructions', 'Enter a full property address to retrieve listing links and publicly available property data.' );
         echo '<textarea name="re_plu_instructions" rows="3" class="large-text">' . esc_textarea( $value ) . '</textarea>';
         echo '<p class="description">Short description shown above the address input on the tool page.</p>';
+    }
+
+    public function section_integrations_description() {
+        echo '<p>Connect Google Maps to enable address autocomplete. Team members see suggestions as they type, with an option to override and enter addresses not found on Google Maps.</p>';
+    }
+
+    public function field_gmaps_key() {
+        $value   = get_option( 're_plu_gmaps_key', '' );
+        $has_key = ! empty( $value );
+        ?>
+        <input
+            type="text"
+            name="re_plu_gmaps_key"
+            class="regular-text"
+            value="<?php echo esc_attr( $value ); ?>"
+            placeholder="AIzaSy..."
+            autocomplete="off"
+            spellcheck="false"
+        >
+        <p class="description">
+            <?php if ( $has_key ) : ?>
+                <strong style="color:#2e7d32;">&#10003; API key is configured.</strong><br>
+            <?php endif; ?>
+            Requires <strong>Maps JavaScript API</strong> and <strong>Places API (New)</strong> enabled
+            in your <a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>.
+            Leave blank to disable autocomplete — free-text address entry will still work normally.
+        </p>
+        <?php
     }
 
     /* -----------------------------------------------------------------------
@@ -218,6 +266,11 @@ class RE_PLU_Admin {
                         <tr><th>Data Point</th><th>Source</th><th>Notes</th></tr>
                     </thead>
                     <tbody>
+                        <tr>
+                            <td>Address Autocomplete</td>
+                            <td>Google Maps Places API</td>
+                            <td>Requires API key (see Integrations above). Falls back to free-text with override option.</td>
+                        </tr>
                         <tr>
                             <td>Platform Links</td>
                             <td>Generated from address</td>

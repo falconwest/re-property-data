@@ -54,6 +54,20 @@ Navigate to **Settings → Property Lookup** to configure:
 | **Tool Access Password** | Shared password for all team members. Stored as a bcrypt hash — never plain text. |
 | **Tool Title** | Heading shown at the top of the embedded tool. |
 | **Instructions Text** | Short description shown above the address input. |
+| **Google Maps API Key** | Enables address autocomplete (optional). See setup steps below. |
+
+### Setting up Google Maps Autocomplete (optional)
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → Library**
+2. Enable **Maps JavaScript API**
+3. Enable **Places API (New)**
+4. Go to **Credentials** → **Create Credentials → API Key**
+5. (Recommended) Restrict the key to **HTTP referrers** for your WordPress domain
+6. Paste the key into **Settings → Property Lookup → Google Maps API Key**
+
+**Without a key:** the address input works as plain free-text — no autocomplete, no change in behavior.
+
+**With a key:** team members see Google address suggestions as they type. An **"Enter manually"** toggle appears below the input for the ~10% of properties not found on Google Maps — clicking it disables the suggestion dropdown and lets them type the address freely. They can restore autocomplete at any time.
 
 Passwords are hashed with `password_hash( ..., PASSWORD_BCRYPT )` before storage. Leaving the password field blank on subsequent saves preserves the existing password.
 

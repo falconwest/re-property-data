@@ -57,6 +57,9 @@ class RE_Property_Lookup {
         add_action( 'wp_ajax_re_clear_session',          [ $this, 'ajax_clear_session' ] );
         add_action( 'wp_ajax_nopriv_re_clear_session',   [ $this, 'ajax_clear_session' ] );
 
+        /* Google Maps — output script tag in footer to avoid WP query-param interference */
+        add_action( 'wp_footer', [ $this, 'output_maps_script' ] );
+
         /* Admin */
         new RE_PLU_Admin();
     }
@@ -96,8 +99,9 @@ class RE_Property_Lookup {
         );
 
         wp_localize_script( 're-property-lookup', 'rePropLookup', [
-            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 're_plu_nonce' ),
+            'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+            'nonce'       => wp_create_nonce( 're_plu_nonce' ),
+            'mapsEnabled' => ! empty( get_option( 're_plu_gmaps_key', '' ) ),
         ] );
     }
 
@@ -111,6 +115,36 @@ class RE_Property_Lookup {
             [],
             RE_PLU_VERSION
         );
+    }
+
+    /* -----------------------------------------------------------------------
+     * Google Maps Places API script tag
+     *
+     * We output this directly in wp_footer rather than via wp_enqueue_script
+     * because WordPress appends a ?ver= parameter to enqueued URLs, which
+     * conflicts with the Google Maps callback query parameter.
+     * -------------------------------------------------------------------- */
+
+    public function output_maps_script() {
+        $key = get_option( 're_plu_gmaps_key', '' );
+        if ( empty( $key ) ) {
+            return;
+        }
+
+        /* Only load on pages/posts that actually contain the shortcode */
+        global $post;
+        if ( ! $post || ! has_shortcode( $post->post_content, 'property_lookup' ) ) {
+            return;
+        }
+
+        $src = add_query_arg( [
+            'key'       => $key,
+            'libraries' => 'places',
+            'callback'  => 'initRePlacesAutocomplete',
+            'loading'   => 'async',
+        ], 'https://maps.googleapis.com/maps/api/js' );
+
+        printf( '<script src="%s" async defer></script>' . "\n", esc_url( $src ) );
     }
 
     /* -----------------------------------------------------------------------
