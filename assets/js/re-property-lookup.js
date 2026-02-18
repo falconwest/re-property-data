@@ -2,7 +2,7 @@
  * RE Property Lookup — Frontend JavaScript
  *
  * Handles:
- *   - Google Maps Places Autocomplete (when API key is configured)
+ *   - Google Maps Places PlaceAutocompleteElement (when API key is configured)
  *   - Override mode for addresses not found on Google Maps
  *   - Password form submission (AJAX → PHP session)
  *   - Address lookup form submission (AJAX → PHP data fetcher)
@@ -10,37 +10,40 @@
  */
 
 /* =========================================================================
- * Google Maps Places Autocomplete
+ * Google Maps Places — PlaceAutocompleteElement
  *
  * This function is called as the Maps JS API callback. It must be a global.
- * When no API key is configured, this function is never called.
+ * When no API key is configured this function is never called.
  * ======================================================================= */
 
 window.initRePlacesAutocomplete = function () {
-    var input = document.getElementById( 're-plu-address' );
-    if ( ! input ) { return; }
+    var wrapper    = document.getElementById( 're-plu-address-wrapper' );
+    var plainInput = document.getElementById( 're-plu-address' );
+    if ( ! wrapper || ! plainInput ) { return; }
 
     try {
-        var autocomplete = new google.maps.places.Autocomplete( input, {
+        var placeEl = new google.maps.places.PlaceAutocompleteElement( {
             types:                 [ 'address' ],
             componentRestrictions: { country: 'us' },
-            fields:                [ 'formatted_address' ],
         } );
+        placeEl.id = 're-plu-address-pac';
 
-        /* When a suggestion is chosen, write the formatted address into the field */
-        autocomplete.addListener( 'place_changed', function () {
-            var place = autocomplete.getPlace();
-            if ( place && place.formatted_address ) {
-                input.value = place.formatted_address;
-                /* Remove override state if the user picks a Maps suggestion */
-                if ( window.rePluOverrideActive ) {
-                    window.rePluDisableOverride();
-                }
+        /* Insert before the plain input; hide the plain input (override fallback) */
+        wrapper.insertBefore( placeEl, plainInput );
+        plainInput.style.display = 'none';
+
+        /* On place selection sync the formatted address to the plain input */
+        placeEl.addEventListener( 'gmp-select', function ( event ) {
+            var place = event.placePrediction.toPlace();
+            place.fetchFields( { fields: [ 'formattedAddress' ] } ).then( function () {
+                plainInput.value = place.formattedAddress;
+            } );
+            if ( window.rePluOverrideActive ) {
+                window.rePluDisableOverride();
             }
         } );
 
-        /* Store on window so the override toggle can reach it */
-        window.rePlacesAutocomplete = autocomplete;
+        window.rePlacesAutocomplete = placeEl;
 
         /* Reveal the override row now that autocomplete is live */
         var overrideRow = document.getElementById( 're-plu-override-row' );
@@ -48,11 +51,8 @@ window.initRePlacesAutocomplete = function () {
 
     } catch ( e ) {
         /*
-         * Maps API failed to initialize — most commonly caused by an API key
-         * referrer restriction not including this domain (RefererNotAllowedMapError).
-         *
-         * Degrade gracefully: the input works as plain free-text and the lookup
-         * continues to function normally without autocomplete.
+         * Maps API failed to initialize — degrade gracefully: the plain input
+         * works as free-text and the lookup continues without autocomplete.
          *
          * Fix: add this site's domain to the API key's allowed HTTP referrers
          * in Google Cloud Console → APIs & Services → Credentials.
@@ -89,6 +89,28 @@ window.initRePlacesAutocomplete = function () {
             .show();
     }
 
+    /* Read the address from whichever input is currently active */
+    function getAddressValue() {
+        var placeEl = document.getElementById( 're-plu-address-pac' );
+        if ( placeEl && placeEl.style.display !== 'none' ) {
+            /* Autocomplete mode: read directly from the element's text value */
+            return ( placeEl.value || '' ).trim();
+        }
+        /* Override / no-Maps mode */
+        var plain = document.getElementById( 're-plu-address' );
+        return plain ? plain.value.trim() : '';
+    }
+
+    function focusAddressInput() {
+        var placeEl = document.getElementById( 're-plu-address-pac' );
+        if ( placeEl && placeEl.style.display !== 'none' ) {
+            try { placeEl.focus(); } catch ( e ) {}
+            return;
+        }
+        var plain = document.getElementById( 're-plu-address' );
+        if ( plain ) { plain.focus(); }
+    }
+
     /* -----------------------------------------------------------------------
      * Password form
      * -------------------------------------------------------------------- */
@@ -115,7 +137,6 @@ window.initRePlacesAutocomplete = function () {
         } )
         .done( function ( res ) {
             if ( res.success ) {
-                /* Reload the page — the PHP session flag will now show the tool */
                 window.location.reload();
             } else {
                 showMessage( $msg, res.data.message || 'Incorrect password.', 'error' );
@@ -129,7 +150,6 @@ window.initRePlacesAutocomplete = function () {
         } );
     } );
 
-    /* Allow pressing Enter in the password field */
     $( '#re-plu-password' ).on( 'keydown', function ( e ) {
         if ( e.key === 'Enter' ) { $( '#re-plu-pw-submit' ).trigger( 'click' ); }
     } );
@@ -150,27 +170,38 @@ window.initRePlacesAutocomplete = function () {
     /* -----------------------------------------------------------------------
      * Override toggle
      *
-     * When Google Maps autocomplete is active, team members can click
-     * "Enter manually" to bypass autocomplete for addresses not on Maps.
-     * The toggle suppresses the Google suggestions dropdown via a body class,
-     * adds a visual indicator on the input, and can be reversed.
+     * When PlaceAutocompleteElement is active, team members can click
+     * "Enter manually" to bypass it for addresses not in Google's database.
+     * The toggle hides the autocomplete element, shows the plain text input,
+     * and can be reversed.
      * -------------------------------------------------------------------- */
 
     window.rePluOverrideActive = false;
 
     window.rePluEnableOverride = function () {
         window.rePluOverrideActive = true;
-        $( '#re-plu-address' ).addClass( 're-plu-input--override' );
+        var placeEl    = document.getElementById( 're-plu-address-pac' );
+        var plainInput = document.getElementById( 're-plu-address' );
+        if ( placeEl )    { placeEl.style.display = 'none'; }
+        if ( plainInput ) {
+            plainInput.style.display = '';
+            plainInput.classList.add( 're-plu-input--override' );
+            plainInput.focus();
+        }
         $( 'body' ).addClass( 're-plu-override-active' );
         $( '#re-plu-override-toggle-btn' ).text( 'Restore autocomplete' ).addClass( 're-plu-override-restore' );
         $( '#re-plu-override-label' ).text( 'Manual entry active —' );
-        /* Re-focus the input so the team member can start typing immediately */
-        $( '#re-plu-address' ).trigger( 'focus' );
     };
 
     window.rePluDisableOverride = function () {
         window.rePluOverrideActive = false;
-        $( '#re-plu-address' ).removeClass( 're-plu-input--override' );
+        var placeEl    = document.getElementById( 're-plu-address-pac' );
+        var plainInput = document.getElementById( 're-plu-address' );
+        if ( placeEl )    { placeEl.style.display = ''; }
+        if ( plainInput ) {
+            plainInput.style.display = 'none';
+            plainInput.classList.remove( 're-plu-input--override' );
+        }
         $( 'body' ).removeClass( 're-plu-override-active' );
         $( '#re-plu-override-toggle-btn' ).text( 'Enter manually' ).removeClass( 're-plu-override-restore' );
         $( '#re-plu-override-label' ).text( 'Address not on Google Maps?' );
@@ -192,21 +223,21 @@ window.initRePlacesAutocomplete = function () {
         runLookup();
     } );
 
+    /* Enter key on the plain input (override / no-Maps mode) */
     $( '#re-plu-address' ).on( 'keydown', function ( e ) {
         if ( e.key === 'Enter' ) { runLookup(); }
     } );
 
     function runLookup() {
         var $btn     = $( '#re-plu-lookup' );
-        var $address = $( '#re-plu-address' );
         var $err     = $( '#re-plu-lookup-error' );
         var $results = $( '#re-plu-results' );
 
-        var address = $address.val().trim();
+        var address = getAddressValue();
 
         if ( ! address ) {
             $err.text( 'Please enter a property address.' ).show();
-            $address.focus();
+            focusAddressInput();
             return;
         }
 
@@ -223,7 +254,6 @@ window.initRePlacesAutocomplete = function () {
             if ( res.success ) {
                 renderResults( res.data );
                 $results.show();
-                /* Smooth scroll to results */
                 $( 'html, body' ).animate(
                     { scrollTop: $results.offset().top - 80 },
                     400
@@ -252,7 +282,6 @@ window.initRePlacesAutocomplete = function () {
         /* ---- Address banner ---- */
         var displayAddr = geo.display_name || esc( data.address );
         $( '#re-plu-results' ).prepend( function () {
-            /* Remove any previous banner */
             $( '.re-plu-address-banner' ).remove();
             return (
                 '<div class="re-plu-address-banner">' +
@@ -262,19 +291,9 @@ window.initRePlacesAutocomplete = function () {
             );
         } );
 
-        /* ---- Platform links ---- */
         renderPlatformLinks( urls );
-
-        /* ---- Property details ---- */
-        renderPropertyDetails( prop, geo );
-
-        /* ---- Tenants & square footage ---- */
-        renderTenants( urls );
-
-        /* ---- Permits ---- */
+        renderPropertyDetails( prop, geo, urls );
         renderPermits( prop.permits || [] );
-
-        /* ---- Notes & data sources ---- */
         renderNotes( prop.notes || [], prop.data_sources || [] );
     }
 
@@ -321,38 +340,106 @@ window.initRePlacesAutocomplete = function () {
         $( '#re-plu-platform-links' ).html( html );
     }
 
-    /* ---- Property details grid ---- */
-    function renderPropertyDetails( prop, geo ) {
-        /* Address validation badge (Smarty DPV match) */
-        var dpvLabels = { 'Y': '✓ Validated', 'S': '~ Partial match', 'D': '~ Default match', 'N': '✗ Not found' };
-        var validationVal = geo.dpv_status ? ( dpvLabels[ geo.dpv_status ] || geo.dpv_status ) : null;
+    /* ---- Property details grid (all Smarty fields + OSM building data) ----
+     *
+     * Sections:
+     *   1. Location          — Smarty components + metadata
+     *   2. USPS Classification — Smarty metadata
+     *   3. Address Validation  — Smarty analysis
+     *   4. Geocoding           — Smarty metadata
+     *   5. Building Data       — OpenStreetMap / Overpass API
+     *   6. Square Footage & Tenants notice (merged section)
+     * -------------------------------------------------------------------- */
+    function renderPropertyDetails( prop, geo, urls ) {
 
-        /* ZIP+4 */
+        var dpvLabels = {
+            'Y': '✓ Validated (full match)',
+            'S': '⚠ Partial match',
+            'D': '⚠ Default match',
+            'N': '✗ Not found',
+        };
+        var validationVal = geo.dpv_status
+            ? ( dpvLabels[ geo.dpv_status ] || geo.dpv_status )
+            : null;
+
         var zipDisplay = geo.zip || null;
         if ( geo.zip && geo.zip_plus4 ) { zipDisplay = geo.zip + '-' + geo.zip_plus4; }
 
+        var recordTypes = {
+            'F': 'Firm',
+            'G': 'General Delivery',
+            'H': 'High-rise / Multi-unit',
+            'P': 'PO Box',
+            'R': 'Rural Route',
+            'S': 'Street',
+        };
+        var recordTypeVal = geo.record_type
+            ? ( recordTypes[ geo.record_type ] || geo.record_type )
+            : null;
+
+        /* Helper: map Y/N/true/false to readable labels */
+        function yn( val, yesLabel, noLabel ) {
+            if ( val === 'Y' || val === 'true' || val === true )  { return yesLabel || 'Yes'; }
+            if ( val === 'N' || val === 'false' || val === false ) { return noLabel  || 'No';  }
+            return null;
+        }
+
+        var utcDisplay = null;
+        if ( geo.utc_offset !== undefined && geo.utc_offset !== null && geo.utc_offset !== '' ) {
+            utcDisplay = 'UTC' + ( Number( geo.utc_offset ) >= 0 ? '+' : '' ) + geo.utc_offset;
+        }
+
+        /* ── All available Smarty + OSM fields ── */
         var cells = [
-            { label: 'City',              value: geo.city           || null },
-            { label: 'County',            value: geo.county         || null },
-            { label: 'State',             value: geo.state          || null },
-            { label: 'ZIP Code',          value: zipDisplay                  },
-            { label: 'Property Class',    value: geo.rdi            || null, na_note: 'Not determined' },
-            { label: 'Address Status',    value: validationVal               },
-            { label: 'Year Built',        value: prop.year_built    || null },
-            { label: 'Building Type',     value: prop.building_type || null },
-            { label: 'Floors / Levels',   value: prop.building_levels ? prop.building_levels + ' floor(s)' : null },
-            { label: 'Square Footage',    value: prop.square_footage || null, na_note: 'See platform links' },
+
+            /* Location */
+            { label: 'City',                   value: geo.city                      },
+            { label: 'Default City Name',       value: geo.default_city              },
+            { label: 'County',                  value: geo.county                    },
+            { label: 'County FIPS',             value: geo.county_fips               },
+            { label: 'State',                   value: geo.state                     },
+            { label: 'ZIP Code',                value: zipDisplay                    },
+            { label: 'Congressional District',  value: geo.congressional_district    },
+
+            /* USPS Classification */
+            { label: 'Delivery Type',           value: recordTypeVal                 },
+            { label: 'ZIP Type',                value: geo.zip_type                  },
+            { label: 'Property Class (RDI)',    value: geo.rdi,    na_note: 'Not determined' },
+            { label: 'Geocode Precision',       value: geo.precision                 },
+            { label: 'Carrier Route',           value: geo.carrier_route             },
+            { label: 'Multi-delivery Building', value: yn( geo.building_default, 'Yes', 'No' ) },
+
+            /* Address Validation */
+            { label: 'Address Status',          value: validationVal                 },
+            { label: 'DPV Footnotes',           value: geo.dpv_footnotes             },
+            { label: 'CMRA Address',            value: yn( geo.dpv_cmra,    'Yes (Commercial Mail Receiving Agency)', 'No' ) },
+            { label: 'Vacant',                  value: yn( geo.dpv_vacant,  'Yes', 'No' ) },
+            { label: 'No-Stat Address',         value: yn( geo.dpv_no_stat, 'Yes (not currently deliverable)', 'No' ) },
+            { label: 'Active',                  value: yn( geo.active,      'Yes', 'No' ) },
+            { label: 'EWS Match',               value: yn( geo.ews_match,   'Yes (address change pending)', 'No' ) },
+
+            /* Geocoding */
+            { label: 'Latitude',                value: geo.lat                       },
+            { label: 'Longitude',               value: geo.lon                       },
+            { label: 'Time Zone',               value: geo.time_zone                 },
+            { label: 'UTC Offset',              value: utcDisplay                    },
+            { label: 'Daylight Saving',         value: yn( geo.dst, 'Yes', 'No' )   },
+
+            /* Building data (OpenStreetMap) */
+            { label: 'Year Built',              value: prop.year_built               },
+            { label: 'Building Type',           value: prop.building_type            },
+            { label: 'Floors / Levels',         value: prop.building_levels ? prop.building_levels + ' floor(s)' : null },
         ];
 
         var html = '';
         cells.forEach( function ( c ) {
-            var val = c.value;
+            var val = ( c.value !== undefined && c.value !== null && String( c.value ).trim() !== '' )
+                ? c.value : null;
             var valHtml;
             if ( val ) {
                 valHtml = '<div class="re-plu-detail-value">' + esc( String( val ) ) + '</div>';
             } else {
-                var naText = c.na_note || 'Not found via public data';
-                valHtml = '<div class="re-plu-detail-value not-available">' + esc( naText ) + '</div>';
+                valHtml = '<div class="re-plu-detail-value not-available">' + esc( c.na_note || 'Not available' ) + '</div>';
             }
             html +=
                 '<div class="re-plu-detail-cell">' +
@@ -362,23 +449,19 @@ window.initRePlacesAutocomplete = function () {
         } );
 
         $( '#re-plu-property-details' ).html( html );
-    }
 
-    /* ---- Tenants & square footage (API-required notice) ---- */
-    function renderTenants( urls ) {
-        var html =
+        /* Square Footage & Tenants notice — merged into this section */
+        $( '#re-plu-sqft-note' ).html(
             '<div class="re-plu-api-notice">' +
-            '<div class="re-plu-api-notice-icon">&#9888;</div>' +
+            '<div class="re-plu-api-notice-icon">&#9432;</div>' +
             '<div>' +
-            '<strong>Available via linked platforms / future API connection</strong>' +
-            'Square footage and current tenant data require either manual review on the ' +
-            'platforms above or a data provider API connection (e.g., ATTOM, CoStar, LoopNet API). ' +
-            'Review <a href="' + esc( urls.loopnet || '#' ) + '" target="_blank" rel="noopener noreferrer">LoopNet</a> ' +
-            'for available units, tenants, and lease rates for this property.' +
+            '<strong>Square Footage &amp; Available Tenants</strong>' +
+            'Not available from Smarty. Review ' +
+            '<a href="' + esc( urls.loopnet || '#' ) + '" target="_blank" rel="noopener noreferrer">LoopNet</a>' +
+            ' for available units, tenants, and lease rates for this property.' +
             '</div>' +
-            '</div>';
-
-        $( '#re-plu-tenants-section' ).html( html );
+            '</div>'
+        );
     }
 
     /* ---- Permit links ---- */
