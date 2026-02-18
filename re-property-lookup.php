@@ -8,7 +8,7 @@
  * License:      GPL-2.0+
  * Text Domain:  re-property-lookup
  * GitHub Plugin URI: https://github.com/falconwest/re-property-data
- * Primary Branch: claude/property-data-lookup-tool-AtRJT
+ * Primary Branch: main
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
