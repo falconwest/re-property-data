@@ -73,17 +73,37 @@ class RE_PLU_Data_Fetcher {
             $result['address_valid']     = $valid;
 
             $result['geocoded'] = [
-                'display_name' => $result['smarty_formatted'],
-                'lat'          => $lat,
-                'lon'          => $lon,
-                'city'         => $city,
-                'county'       => $county,
-                'state'        => $state,
-                'zip'          => $zip,
-                'zip_plus4'    => $components['plus4_code'] ?? null,
-                'rdi'          => $metadata['rdi']          ?? null,  // 'Commercial' | 'Residential'
-                'time_zone'    => $metadata['time_zone']    ?? null,
-                'dpv_status'   => $dpv,
+                'display_name'           => $result['smarty_formatted'],
+                'lat'                    => $lat,
+                'lon'                    => $lon,
+                // ── Location ──
+                'city'                   => $city,
+                'default_city'           => $components['default_city_name']         ?? null,
+                'county'                 => $county,
+                'county_fips'            => $metadata['county_fips']                 ?? null,
+                'state'                  => $state,
+                'zip'                    => $zip,
+                'zip_plus4'              => $components['plus4_code']                 ?? null,
+                'congressional_district' => $metadata['congressional_district']       ?? null,
+                // ── USPS Classification ──
+                'record_type'            => $metadata['record_type']                  ?? null,
+                'zip_type'               => $metadata['zip_type']                     ?? null,
+                'carrier_route'          => $metadata['carrier_route']                ?? null,
+                'rdi'                    => $metadata['rdi']                          ?? null,
+                'precision'              => $metadata['precision']                    ?? null,
+                'building_default'       => $metadata['building_default_indicator']   ?? null,
+                // ── Geocoding ──
+                'time_zone'              => $metadata['time_zone']                    ?? null,
+                'utc_offset'             => $metadata['utc_offset']                   ?? null,
+                'dst'                    => $metadata['dst']                          ?? null,
+                // ── Address Validation ──
+                'dpv_status'             => $dpv,
+                'dpv_footnotes'          => $analysis['dpv_footnotes']                ?? null,
+                'dpv_cmra'               => $analysis['dpv_cmra']                     ?? null,
+                'dpv_vacant'             => $analysis['dpv_vacant']                   ?? null,
+                'dpv_no_stat'            => $analysis['dpv_no_stat']                  ?? null,
+                'active'                 => $analysis['active']                       ?? null,
+                'ews_match'              => $analysis['ews_match']                    ?? null,
             ];
 
             $result['data_sources'][] = 'Smarty US Street Address API (validation & geocoding)';

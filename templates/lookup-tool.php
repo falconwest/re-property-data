@@ -33,15 +33,17 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
         <div class="re-plu-search-row">
             <div class="re-plu-field re-plu-field-grow">
                 <label for="re-plu-address" class="re-plu-label">Property Address</label>
-                <input
-                    type="text"
-                    id="re-plu-address"
-                    class="re-plu-input"
-                    placeholder="e.g. 350 N Orleans St, Chicago, IL 60654"
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                >
+                <div id="re-plu-address-wrapper">
+                    <input
+                        type="text"
+                        id="re-plu-address"
+                        class="re-plu-input"
+                        placeholder="e.g. 350 N Orleans St, Chicago, IL 60654"
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                    >
+                </div>
             </div>
             <div class="re-plu-search-action">
                 <button type="button" id="re-plu-lookup" class="re-plu-btn re-plu-btn-primary">
@@ -75,7 +77,7 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
                     Listing Platform Links
                 </h3>
-                <p class="re-plu-section-note">Click to open search results for this address on each platform.</p>
+                <p class="re-plu-section-note">Click to search for this property on each platform. Direct listing links require platform API access.</p>
             </div>
             <div class="re-plu-platform-grid" id="re-plu-platform-links"></div>
         </div>
@@ -89,17 +91,7 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
                 </h3>
             </div>
             <div class="re-plu-detail-grid" id="re-plu-property-details"></div>
-        </div>
-
-        <!-- Square Footage & Tenants -->
-        <div class="re-plu-card">
-            <div class="re-plu-section-header">
-                <h3 class="re-plu-section-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
-                    Square Footage &amp; Available Tenants
-                </h3>
-            </div>
-            <div id="re-plu-tenants-section"></div>
+            <div id="re-plu-sqft-note" style="margin-top:16px;"></div>
         </div>
 
         <!-- Permits -->
