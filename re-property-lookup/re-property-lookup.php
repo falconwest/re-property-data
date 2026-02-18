@@ -204,16 +204,21 @@ class RE_Property_Lookup {
             wp_send_json_error( [ 'message' => 'Please enter a property address.' ] );
         }
 
-        $url_gen      = new RE_PLU_URL_Generator( $address );
-        $data_fetcher = new RE_PLU_Data_Fetcher( $address );
+        /* Fetch property data first so Smarty components are available
+         * for building precise, address-specific platform URLs. */
+        $data_fetcher  = new RE_PLU_Data_Fetcher( $address );
+        $property_data = $data_fetcher->fetch_all_data();
+
+        $url_gen = new RE_PLU_URL_Generator(
+            $property_data['smarty_formatted'] ?? $address,
+            $property_data['smarty_components'] ?? null
+        );
 
         $urls = [
             'zillow'  => $url_gen->get_zillow_url(),
             'redfin'  => $url_gen->get_redfin_url(),
             'loopnet' => $url_gen->get_loopnet_url(),
         ];
-
-        $property_data = $data_fetcher->fetch_all_data();
 
         wp_send_json_success( [
             'address'       => $address,

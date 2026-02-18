@@ -1,6 +1,10 @@
 <?php
 /**
- * Generates search URLs for Zillow, Redfin, and LoopNet from a raw address.
+ * Generates address-specific search URLs for Zillow, Redfin, and LoopNet.
+ *
+ * When Smarty components are provided the URLs are built from standardized
+ * USPS address parts, producing a much more accurate direct-address link.
+ * When components are absent the raw address string is used as a fallback.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,53 +14,109 @@ if ( ! defined( 'ABSPATH' ) ) {
 class RE_PLU_URL_Generator {
 
     private $address;
+    private $components; /* Smarty components array, or null */
 
-    public function __construct( $address ) {
-        $this->address = trim( $address );
+    public function __construct( $address, $components = null ) {
+        $this->address    = trim( $address );
+        $this->components = $components;
     }
 
     /* -----------------------------------------------------------------------
      * Zillow
      *
-     * Formats the address as a slug and appends the Zillow search suffix.
-     * e.g. "123 Main St, Chicago, IL 60601" → zillow.com/homes/123-main-st-chicago-il-60601_rb/
+     * Zillow resolves the pattern:
+     *   zillow.com/homes/{number}-{predirection}-{street}-{suffix}-{city}-{state}-{zip}_rb/
+     * directly to the property page when it exists in their database.
      * -------------------------------------------------------------------- */
 
     public function get_zillow_url() {
-        $slug = strtolower( $this->address );
-        $slug = preg_replace( '/[^a-z0-9\s]/', '', $slug );
-        $slug = preg_replace( '/\s+/', '-', trim( $slug ) );
-        $slug = rtrim( $slug, '-' );
+        if ( $this->components ) {
+            $c     = $this->components;
+            $parts = array_filter( [
+                $c['primary_number']       ?? '',
+                $c['street_predirection']  ?? '',
+                $c['street_name']          ?? '',
+                $c['street_suffix']        ?? '',
+                $c['secondary_designator'] ?? '',
+                $c['secondary_number']     ?? '',
+                $c['city_name']            ?? '',
+                $c['state_abbreviation']   ?? '',
+                $c['zipcode']              ?? '',
+            ] );
 
+            $slug = strtolower( implode( ' ', $parts ) );
+            $slug = preg_replace( '/[^a-z0-9]+/', '-', $slug );
+            $slug = trim( $slug, '-' );
+
+            return 'https://www.zillow.com/homes/' . $slug . '_rb/';
+        }
+
+        /* Fallback: slug the raw address */
+        $slug = strtolower( $this->address );
+        $slug = preg_replace( '/[^a-z0-9]+/', '-', $slug );
+        $slug = trim( $slug, '-' );
         return 'https://www.zillow.com/homes/' . $slug . '_rb/';
     }
 
     /* -----------------------------------------------------------------------
      * Redfin
      *
-     * Uses the Redfin search endpoint with the address as the query parameter.
+     * Redfin's search endpoint resolves a standardized address string to
+     * the closest matching property listing.
      * -------------------------------------------------------------------- */
 
     public function get_redfin_url() {
-        return 'https://www.redfin.com/search?q=' . rawurlencode( $this->address );
+        $query = $this->components
+            ? $this->build_standardized_string()
+            : $this->address;
+
+        return 'https://www.redfin.com/search?q=' . rawurlencode( $query );
     }
 
     /* -----------------------------------------------------------------------
      * LoopNet
      *
-     * Uses LoopNet's search with a property-type=all filter so both
-     * for-sale and for-lease commercial listings appear.
+     * LoopNet is the primary platform for commercial listings. The search
+     * endpoint accepts a full address string and returns the closest match.
      * -------------------------------------------------------------------- */
 
     public function get_loopnet_url() {
-        return 'https://www.loopnet.com/search/?q=' . rawurlencode( $this->address ) . '&propertyType=all';
+        $query = $this->components
+            ? $this->build_standardized_string()
+            : $this->address;
+
+        return 'https://www.loopnet.com/search/?q=' . rawurlencode( $query ) . '&propertyType=all';
     }
 
     /* -----------------------------------------------------------------------
-     * Helper: extract city/state slug for LoopNet browse links
-     *
-     * When only a city/state is known, LoopNet has structured browse URLs.
-     * e.g. Chicago, IL → loopnet.com/search/commercial-real-estate/chicago-il/for-sale/
+     * Build a clean "123 N Main St, Chicago, IL 60601" string from Smarty
+     * components — used for Redfin and LoopNet query parameters.
+     * -------------------------------------------------------------------- */
+
+    private function build_standardized_string() {
+        $c = $this->components;
+
+        $street = trim( implode( ' ', array_filter( [
+            $c['primary_number']       ?? '',
+            $c['street_predirection']  ?? '',
+            $c['street_name']          ?? '',
+            $c['street_suffix']        ?? '',
+            $c['street_postdirection'] ?? '',
+            $c['secondary_designator'] ?? '',
+            $c['secondary_number']     ?? '',
+        ] ) ) );
+
+        $city_line = trim( implode( ' ', array_filter( [
+            $c['city_name']          ?? '',
+            $c['state_abbreviation'] ?? '',
+            $c['zipcode']            ?? '',
+        ] ) ) );
+
+        return $street . ', ' . $city_line;
+    }
+
+    /* -----------------------------------------------------------------------
+     * Helper: city-level LoopNet browse URL (used in permit links context)
      * -------------------------------------------------------------------- */
 
     public static function get_loopnet_city_url( $city, $state_abbr ) {

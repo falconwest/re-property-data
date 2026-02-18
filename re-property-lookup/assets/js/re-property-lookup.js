@@ -323,15 +323,25 @@ window.initRePlacesAutocomplete = function () {
 
     /* ---- Property details grid ---- */
     function renderPropertyDetails( prop, geo ) {
+        /* Address validation badge (Smarty DPV match) */
+        var dpvLabels = { 'Y': '✓ Validated', 'S': '~ Partial match', 'D': '~ Default match', 'N': '✗ Not found' };
+        var validationVal = geo.dpv_status ? ( dpvLabels[ geo.dpv_status ] || geo.dpv_status ) : null;
+
+        /* ZIP+4 */
+        var zipDisplay = geo.zip || null;
+        if ( geo.zip && geo.zip_plus4 ) { zipDisplay = geo.zip + '-' + geo.zip_plus4; }
+
         var cells = [
-            { label: 'City',           value: geo.city      || null },
-            { label: 'County',         value: geo.county    || null },
-            { label: 'State',          value: geo.state     || null },
-            { label: 'ZIP Code',       value: geo.zip       || null },
-            { label: 'Year Built',     value: prop.year_built     || null },
-            { label: 'Building Type',  value: prop.building_type  || null },
-            { label: 'Floors / Levels',value: prop.building_levels ? prop.building_levels + ' floor(s)' : null },
-            { label: 'Square Footage', value: prop.square_footage || null, na_note: 'See platform links' },
+            { label: 'City',              value: geo.city           || null },
+            { label: 'County',            value: geo.county         || null },
+            { label: 'State',             value: geo.state          || null },
+            { label: 'ZIP Code',          value: zipDisplay                  },
+            { label: 'Property Class',    value: geo.rdi            || null, na_note: 'Not determined' },
+            { label: 'Address Status',    value: validationVal               },
+            { label: 'Year Built',        value: prop.year_built    || null },
+            { label: 'Building Type',     value: prop.building_type || null },
+            { label: 'Floors / Levels',   value: prop.building_levels ? prop.building_levels + ' floor(s)' : null },
+            { label: 'Square Footage',    value: prop.square_footage || null, na_note: 'See platform links' },
         ];
 
         var html = '';

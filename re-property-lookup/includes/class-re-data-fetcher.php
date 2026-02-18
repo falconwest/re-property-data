@@ -2,14 +2,12 @@
 /**
  * Fetches publicly available property data for a given address.
  *
- * Data sources used (all free, no API key required):
- *   1. Nominatim (OpenStreetMap) — geocoding, address normalisation
- *   2. Overpass API (OpenStreetMap) — building year, type, levels
- *   3. Curated permit portal directory — links to public city/county permit searches
- *
- * Designed to be extended: add an API key option in Settings and call a
- * premium provider (ATTOM, CoStar, etc.) inside fetch_all_data() without
- * changing any other code.
+ * Data sources (in priority order):
+ *   1. Smarty US Street Address API — address validation, standardization,
+ *      lat/lng, county, ZIP+4, commercial/residential classification (secret key, server-side)
+ *   2. Nominatim (OpenStreetMap) — fallback geocoding when Smarty is not configured
+ *   3. Overpass API (OpenStreetMap) — building year, type, levels
+ *   4. Curated permit portal directory — links to public city/county permit searches
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -33,48 +31,104 @@ class RE_PLU_Data_Fetcher {
 
     public function fetch_all_data() {
         $result = [
-            'geocoded'       => null,
-            'year_built'     => null,
-            'building_type'  => null,
-            'building_levels'=> null,
-            'square_footage' => null,   // Requires paid API (placeholder)
-            'tenants'        => null,   // Requires paid API (placeholder)
-            'permits'        => [],
-            'data_sources'   => [],
-            'notes'          => [],
+            'geocoded'          => null,
+            'year_built'        => null,
+            'building_type'     => null,
+            'building_levels'   => null,
+            'square_footage'    => null,   // Requires paid API (placeholder)
+            'tenants'           => null,   // Requires paid API (placeholder)
+            'permits'           => [],
+            'data_sources'      => [],
+            'notes'             => [],
+            /* Smarty-specific — consumed by URL generator */
+            'smarty_components' => null,
+            'smarty_formatted'  => null,
+            'address_valid'     => null,
         ];
 
-        /* Step 1 — Geocode */
-        $geocode = $this->geocode_address();
+        /* ----------------------------------------------------------------
+         * Step 1 — Validate & geocode via Smarty (primary)
+         *           Fall back to Nominatim when Smarty is not configured.
+         * -------------------------------------------------------------- */
+        $smarty = $this->validate_with_smarty();
 
-        if ( ! $geocode ) {
-            $result['notes'][] = 'Could not geocode this address. Verify the address is complete and try again.';
-            $result['notes'][] = 'Platform links above are still generated and can be used for manual research.';
-            return $result;
+        if ( $smarty ) {
+            $components = $smarty['components'] ?? [];
+            $metadata   = $smarty['metadata']   ?? [];
+            $analysis   = $smarty['analysis']   ?? [];
+
+            $city   = $components['city_name']         ?? null;
+            $state  = $components['state_abbreviation'] ?? null;
+            $zip    = $components['zipcode']            ?? null;
+            $county = $metadata['county_name']          ?? null;
+            $lat    = $metadata['latitude']             ?? null;
+            $lon    = $metadata['longitude']            ?? null;
+
+            /* DPV match codes: Y = full, S = partial, D = default, N = no match */
+            $dpv   = $analysis['dpv_match_code'] ?? '';
+            $valid = in_array( $dpv, [ 'Y', 'S' ], true );
+
+            $result['smarty_components'] = $components;
+            $result['smarty_formatted']  = trim( ( $smarty['delivery_line_1'] ?? '' ) . ', ' . ( $smarty['last_line'] ?? '' ) );
+            $result['address_valid']     = $valid;
+
+            $result['geocoded'] = [
+                'display_name' => $result['smarty_formatted'],
+                'lat'          => $lat,
+                'lon'          => $lon,
+                'city'         => $city,
+                'county'       => $county,
+                'state'        => $state,
+                'zip'          => $zip,
+                'zip_plus4'    => $components['plus4_code'] ?? null,
+                'rdi'          => $metadata['rdi']          ?? null,  // 'Commercial' | 'Residential'
+                'time_zone'    => $metadata['time_zone']    ?? null,
+                'dpv_status'   => $dpv,
+            ];
+
+            $result['data_sources'][] = 'Smarty US Street Address API (validation & geocoding)';
+
+        } else {
+            /* Nominatim fallback */
+            $geocode = $this->geocode_address_nominatim();
+
+            if ( ! $geocode ) {
+                $result['notes'][] = 'Could not validate this address. Verify it is complete (street, city, state, ZIP) and try again.';
+                $result['notes'][] = 'Platform links are still generated and can be used for manual research.';
+                return $result;
+            }
+
+            $addr_parts = $geocode['address'] ?? [];
+            $city   = $addr_parts['city']    ?? $addr_parts['town'] ?? $addr_parts['village'] ?? null;
+            $state  = $addr_parts['state']   ?? null;
+            $zip    = $addr_parts['postcode'] ?? null;
+            $county = $addr_parts['county']  ?? null;
+            $lat    = $geocode['lat']         ?? null;
+            $lon    = $geocode['lon']         ?? null;
+
+            $result['geocoded'] = [
+                'display_name' => $geocode['display_name'] ?? $this->address,
+                'lat'          => $lat,
+                'lon'          => $lon,
+                'city'         => $city,
+                'county'       => $county,
+                'state'        => $state,
+                'zip'          => $zip,
+                'zip_plus4'    => null,
+                'rdi'          => null,
+                'time_zone'    => null,
+                'dpv_status'   => null,
+            ];
+
+            $result['data_sources'][] = 'OpenStreetMap / Nominatim (geocoding fallback)';
         }
 
-        $addr_parts = $geocode['address'] ?? [];
-        $city  = $addr_parts['city']    ?? $addr_parts['town'] ?? $addr_parts['village'] ?? $addr_parts['county'] ?? null;
-        $state = $addr_parts['state']   ?? null;
-        $zip   = $addr_parts['postcode'] ?? null;
-        $county= $addr_parts['county']  ?? null;
-
-        $result['geocoded'] = [
-            'display_name' => $geocode['display_name'] ?? $this->address,
-            'lat'          => $geocode['lat']  ?? null,
-            'lon'          => $geocode['lon']  ?? null,
-            'city'         => $city,
-            'county'       => $county,
-            'state'        => $state,
-            'zip'          => $zip,
-            'osm_type'     => $geocode['osm_type'] ?? null,
-            'osm_id'       => $geocode['osm_id']   ?? null,
-        ];
-        $result['data_sources'][] = 'OpenStreetMap / Nominatim (geocoding)';
-
-        /* Step 2 — OSM building data */
-        $lat = $geocode['lat'] ?? null;
-        $lon = $geocode['lon'] ?? null;
+        /* ----------------------------------------------------------------
+         * Step 2 — OSM building data (uses Smarty lat/lng when available
+         *           for higher accuracy than Nominatim)
+         * -------------------------------------------------------------- */
+        $lat = $result['geocoded']['lat'];
+        $lon = $result['geocoded']['lon'];
 
         if ( $lat && $lon ) {
             $osm = $this->get_osm_building_data( $lat, $lon );
@@ -87,20 +141,72 @@ class RE_PLU_Data_Fetcher {
         }
 
         /* Step 3 — Permit portal links */
-        $result['permits'] = $this->get_permit_portal_links( $city, $state, $county, $zip );
+        $result['permits'] = $this->get_permit_portal_links(
+            $result['geocoded']['city'],
+            $result['geocoded']['state'],
+            $result['geocoded']['county'],
+            $result['geocoded']['zip']
+        );
 
         /* Step 4 — Transparency notes */
         $result['notes'][] = 'Square footage and tenant data are available via the linked platforms (Zillow, Redfin, LoopNet) for manual review.';
-        $result['notes'][] = 'An API connection (ATTOM Data, CoStar, etc.) can be added to this tool for automated square footage and tenant retrieval.';
+        $result['notes'][] = 'An API connection (ATTOM Data, CoStar, etc.) can be added for automated square footage and tenant retrieval.';
 
         return $result;
     }
 
     /* -----------------------------------------------------------------------
-     * Geocode the address using Nominatim
+     * Validate and standardize the address using the Smarty US Street API.
+     *
+     * Uses the Secret Key stored in wp_options — never exposed to the browser.
+     * Returns the first candidate array or null if the address is not found
+     * or if Smarty credentials are not configured.
      * -------------------------------------------------------------------- */
 
-    private function geocode_address() {
+    private function validate_with_smarty() {
+        $auth_id    = get_option( 're_plu_smarty_auth_id',    '' );
+        $auth_token = get_option( 're_plu_smarty_auth_token', '' );
+
+        if ( empty( $auth_id ) || empty( $auth_token ) ) {
+            return null;
+        }
+
+        $endpoint = add_query_arg( [
+            'street'     => $this->address,
+            'candidates' => 1,
+            'auth-id'    => $auth_id,
+            'auth-token' => $auth_token,
+        ], 'https://us-street.api.smarty.com/street-address' );
+
+        $response = wp_remote_get( $endpoint, [
+            'timeout' => 10,
+            'headers' => [
+                'Accept'     => 'application/json',
+                'User-Agent' => self::USER_AGENT,
+            ],
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return null;
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        if ( 200 !== (int) $code ) {
+            return null;
+        }
+
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+
+        /* An empty array means the address was not found / invalid */
+        return ( ! empty( $data ) && isset( $data[0] ) ) ? $data[0] : null;
+    }
+
+    /* -----------------------------------------------------------------------
+     * Geocode the address using Nominatim (fallback when Smarty not configured)
+     * -------------------------------------------------------------------- */
+
+    private function geocode_address_nominatim() {
         $endpoint = add_query_arg( [
             'q'              => $this->address,
             'format'         => 'json',
