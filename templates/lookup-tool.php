@@ -30,37 +30,57 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
             <p class="re-plu-instructions"><?php echo $instructions; ?></p>
         <?php endif; ?>
 
-        <div class="re-plu-search-row">
-            <div class="re-plu-field re-plu-field-grow">
-                <label for="re-plu-address" class="re-plu-label">Property Address</label>
-                <div id="re-plu-address-wrapper">
-                    <input
-                        type="text"
-                        id="re-plu-address"
-                        class="re-plu-input"
-                        placeholder="e.g. 350 N Orleans St, Chicago, IL 60654"
-                        autocomplete="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                    >
-                </div>
+        <div class="re-plu-address-grid">
+            <div class="re-plu-field re-plu-field-street">
+                <label for="re-plu-street" class="re-plu-label">Street Address</label>
+                <input
+                    type="text"
+                    id="re-plu-street"
+                    class="re-plu-input"
+                    placeholder="350 N Orleans St"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                >
             </div>
-            <div class="re-plu-search-action">
-                <button type="button" id="re-plu-lookup" class="re-plu-btn re-plu-btn-primary">
-                    <span class="re-plu-btn-label">Look Up Property</span>
-                    <span class="re-plu-spinner" style="display:none;"></span>
-                </button>
+            <div class="re-plu-field re-plu-field-city">
+                <label for="re-plu-city" class="re-plu-label">City</label>
+                <input
+                    type="text"
+                    id="re-plu-city"
+                    class="re-plu-input"
+                    placeholder="Chicago"
+                    autocomplete="off"
+                >
+            </div>
+            <div class="re-plu-field re-plu-field-state">
+                <label for="re-plu-state" class="re-plu-label">State</label>
+                <input
+                    type="text"
+                    id="re-plu-state"
+                    class="re-plu-input"
+                    placeholder="IL"
+                    maxlength="2"
+                    autocomplete="off"
+                >
+            </div>
+            <div class="re-plu-field re-plu-field-zip">
+                <label for="re-plu-zip" class="re-plu-label">ZIP Code</label>
+                <input
+                    type="text"
+                    id="re-plu-zip"
+                    class="re-plu-input"
+                    placeholder="60654"
+                    maxlength="10"
+                    autocomplete="off"
+                >
             </div>
         </div>
 
-        <!--
-            Override row — hidden until initRePlacesAutocomplete() reveals it.
-            If no Maps API key is configured, this row stays hidden permanently.
-        -->
-        <div id="re-plu-override-row" class="re-plu-override-row" style="display:none;" aria-live="polite">
-            <span id="re-plu-override-label" class="re-plu-override-label">Address not on Google Maps?</span>
-            <button type="button" id="re-plu-override-toggle-btn" class="re-plu-override-btn">
-                Enter manually
+        <div class="re-plu-search-action-row">
+            <button type="button" id="re-plu-lookup" class="re-plu-btn re-plu-btn-primary">
+                <span class="re-plu-btn-label">Look Up Property</span>
+                <span class="re-plu-spinner" style="display:none;"></span>
             </button>
         </div>
 

@@ -3,19 +3,19 @@
  * Plugin Name:  RE Property Lookup
  * Plugin URI:   https://github.com/falconwest/re-property-data
  * Description:  Commercial real estate property data lookup tool for insurance brokerage teams. Enter an address to instantly retrieve Zillow, Redfin, and LoopNet links plus publicly available property data including year built, building type, and permit portal links.
- * Version:      1.3.0
+ * Version:      1.4.0
  * Author:       Your Brokerage
  * License:      GPL-2.0+
  * Text Domain:  re-property-lookup
  * GitHub Plugin URI: https://github.com/falconwest/re-property-data
- * Primary Branch: claude/property-data-lookup-tool-AtRJT
+ * Primary Branch: main
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'RE_PLU_VERSION',  '1.3.0' );
+define( 'RE_PLU_VERSION',  '1.4.0' );
 define( 'RE_PLU_PATH',     plugin_dir_path( __FILE__ ) );
 define( 'RE_PLU_URL',      plugin_dir_url( __FILE__ ) );
 define( 'RE_PLU_BASENAME', plugin_basename( __FILE__ ) );
@@ -59,9 +59,6 @@ class RE_Property_Lookup {
         add_action( 'wp_ajax_re_clear_session',          [ $this, 'ajax_clear_session' ] );
         add_action( 'wp_ajax_nopriv_re_clear_session',   [ $this, 'ajax_clear_session' ] );
 
-        /* Google Maps — output script tag in footer to avoid WP query-param interference */
-        add_action( 'wp_footer', [ $this, 'output_maps_script' ] );
-
         /* Admin */
         new RE_PLU_Admin();
     }
@@ -101,9 +98,8 @@ class RE_Property_Lookup {
         );
 
         wp_localize_script( 're-property-lookup', 'rePropLookup', [
-            'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
-            'nonce'       => wp_create_nonce( 're_plu_nonce' ),
-            'mapsEnabled' => ! empty( get_option( 're_plu_gmaps_key', '' ) ),
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 're_plu_nonce' ),
         ] );
     }
 
@@ -117,36 +113,6 @@ class RE_Property_Lookup {
             [],
             RE_PLU_VERSION
         );
-    }
-
-    /* -----------------------------------------------------------------------
-     * Google Maps Places API script tag
-     *
-     * We output this directly in wp_footer rather than via wp_enqueue_script
-     * because WordPress appends a ?ver= parameter to enqueued URLs, which
-     * conflicts with the Google Maps callback query parameter.
-     * -------------------------------------------------------------------- */
-
-    public function output_maps_script() {
-        $key = get_option( 're_plu_gmaps_key', '' );
-        if ( empty( $key ) ) {
-            return;
-        }
-
-        /* Only load on pages/posts that actually contain the shortcode */
-        global $post;
-        if ( ! $post || ! has_shortcode( $post->post_content, 'property_lookup' ) ) {
-            return;
-        }
-
-        $src = add_query_arg( [
-            'key'       => $key,
-            'libraries' => 'places',
-            'callback'  => 'initRePlacesAutocomplete',
-            'loading'   => 'async',
-        ], 'https://maps.googleapis.com/maps/api/js' );
-
-        printf( '<script src="%s" async defer></script>' . "\n", esc_url( $src ) );
     }
 
     /* -----------------------------------------------------------------------
@@ -200,15 +166,29 @@ class RE_Property_Lookup {
             wp_send_json_error( [ 'message' => 'Session expired. Please refresh the page and enter the password.' ] );
         }
 
-        $address = sanitize_text_field( wp_unslash( $_POST['address'] ?? '' ) );
+        $street = sanitize_text_field( wp_unslash( $_POST['street'] ?? '' ) );
+        $city   = sanitize_text_field( wp_unslash( $_POST['city']   ?? '' ) );
+        $state  = sanitize_text_field( wp_unslash( $_POST['state']  ?? '' ) );
+        $zip    = sanitize_text_field( wp_unslash( $_POST['zip']    ?? '' ) );
 
-        if ( empty( $address ) ) {
-            wp_send_json_error( [ 'message' => 'Please enter a property address.' ] );
+        if ( empty( $street ) ) {
+            wp_send_json_error( [ 'message' => 'Please enter a street address.' ] );
         }
+
+        /* Build a combined address string for URL generator fallback */
+        $address_parts = array_filter( [ $street, $city, trim( $state . ' ' . $zip ) ] );
+        $address = implode( ', ', $address_parts );
+
+        $input_components = [
+            'street' => $street,
+            'city'   => $city,
+            'state'  => $state,
+            'zip'    => $zip,
+        ];
 
         /* Fetch property data first so Smarty components are available
          * for building precise, address-specific platform URLs. */
-        $data_fetcher  = new RE_PLU_Data_Fetcher( $address );
+        $data_fetcher  = new RE_PLU_Data_Fetcher( $address, $input_components );
         $property_data = $data_fetcher->fetch_all_data();
 
         $url_gen = new RE_PLU_URL_Generator(

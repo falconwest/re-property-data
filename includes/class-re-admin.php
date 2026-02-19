@@ -99,18 +99,6 @@ class RE_PLU_Admin {
             're-property-lookup'
         );
 
-        register_setting( 're-property-lookup', 're_plu_gmaps_key', [
-            'sanitize_callback' => 'sanitize_text_field',
-        ] );
-
-        add_settings_field(
-            're_plu_gmaps_key',
-            'Google Maps API Key',
-            [ $this, 'field_gmaps_key' ],
-            're-property-lookup',
-            're_plu_integrations_section'
-        );
-
         register_setting( 're-property-lookup', 're_plu_smarty_auth_id', [
             'sanitize_callback' => 'sanitize_text_field',
         ] );
@@ -183,31 +171,7 @@ class RE_PLU_Admin {
     }
 
     public function section_integrations_description() {
-        echo '<p>Connect Google Maps for address autocomplete and Smarty for address validation and standardization. Smarty improves the accuracy of platform links and unlocks address-level property data.</p>';
-    }
-
-    public function field_gmaps_key() {
-        $value   = get_option( 're_plu_gmaps_key', '' );
-        $has_key = ! empty( $value );
-        ?>
-        <input
-            type="text"
-            name="re_plu_gmaps_key"
-            class="regular-text"
-            value="<?php echo esc_attr( $value ); ?>"
-            placeholder="AIzaSy..."
-            autocomplete="off"
-            spellcheck="false"
-        >
-        <p class="description">
-            <?php if ( $has_key ) : ?>
-                <strong style="color:#2e7d32;">&#10003; API key is configured.</strong><br>
-            <?php endif; ?>
-            Requires <strong>Maps JavaScript API</strong> and <strong>Places API (New)</strong> enabled
-            in your <a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>.
-            Leave blank to disable autocomplete — free-text address entry will still work normally.
-        </p>
-        <?php
+        echo '<p>Connect Smarty for address validation and standardization. Smarty improves the accuracy of platform links and unlocks address-level property data.</p>';
     }
 
     public function field_smarty_auth_id() {
@@ -335,11 +299,6 @@ class RE_PLU_Admin {
                         <tr><th>Data Point</th><th>Source</th><th>Notes</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Address Autocomplete</td>
-                            <td>Google Maps Places API</td>
-                            <td>Requires API key (see Integrations above). Falls back to free-text with override option.</td>
-                        </tr>
                         <tr>
                             <td>Address Validation &amp; Standardization</td>
                             <td>Smarty US Street Address API</td>

@@ -17,12 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class RE_PLU_Data_Fetcher {
 
     private $address;
+    private $input_components; /* street/city/state/zip from the form, or null */
 
     /* Nominatim usage policy: max 1 req/s, must include User-Agent */
     private const USER_AGENT = 'RE-Property-Lookup-WP-Plugin/1.0 (Commercial Real Estate Insurance Tool)';
 
-    public function __construct( $address ) {
-        $this->address = trim( $address );
+    public function __construct( $address, $input_components = null ) {
+        $this->address          = trim( $address );
+        $this->input_components = $input_components;
     }
 
     /* -----------------------------------------------------------------------
@@ -191,12 +193,22 @@ class RE_PLU_Data_Fetcher {
             return null;
         }
 
-        $endpoint = add_query_arg( [
-            'street'     => $this->address,
+        $params = [
             'candidates' => 1,
             'auth-id'    => $auth_id,
             'auth-token' => $auth_token,
-        ], 'https://us-street.api.smarty.com/street-address' );
+        ];
+
+        if ( $this->input_components ) {
+            $params['street']  = $this->input_components['street'] ?? $this->address;
+            $params['city']    = $this->input_components['city']   ?? '';
+            $params['state']   = $this->input_components['state']  ?? '';
+            $params['zipcode'] = $this->input_components['zip']    ?? '';
+        } else {
+            $params['street'] = $this->address;
+        }
+
+        $endpoint = add_query_arg( $params, 'https://us-street.api.smarty.com/street-address' );
 
         $response = wp_remote_get( $endpoint, [
             'timeout' => 10,
@@ -394,30 +406,6 @@ class RE_PLU_Data_Fetcher {
         $city_key = strtolower( trim( $city ?? '' ) );
         if ( $city_key && isset( $city_portals[ $city_key ] ) ) {
             $links[] = array_merge( $city_portals[ $city_key ], [ 'type' => 'city' ] );
-        }
-
-        /* ---- Always include PermitData.com (national aggregator) ---- */
-        $links[] = [
-            'label' => 'PermitData.com — National Permit Search',
-            'url'   => 'https://www.permitdata.com/',
-            'type'  => 'national',
-        ];
-
-        /* ---- OpenDataSoft building permits dataset ---- */
-        $search_term = $city ? $city . ' building permits' : 'building permits';
-        $links[] = [
-            'label' => 'OpenDataSoft — Building Permit Datasets',
-            'url'   => 'https://public.opendatasoft.com/explore/?q=' . rawurlencode( $search_term ) . '&sort=modified',
-            'type'  => 'national',
-        ];
-
-        /* ---- FOIA / public records note ---- */
-        if ( $city && $state ) {
-            $links[] = [
-                'label' => 'Submit a public records (FOIA) request — ' . esc_html( $city ) . ', ' . esc_html( $state ),
-                'url'   => 'https://www.google.com/search?q=' . rawurlencode( $city . ' ' . $state . ' building permit public records request' ),
-                'type'  => 'foia',
-            ];
         }
 
         return $links;
