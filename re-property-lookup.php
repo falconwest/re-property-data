@@ -3,19 +3,19 @@
  * Plugin Name:  RE Property Lookup
  * Plugin URI:   https://github.com/falconwest/re-property-data
  * Description:  Commercial real estate property data lookup tool for insurance brokerage teams. Enter an address to instantly retrieve Zillow, Redfin, and LoopNet links plus publicly available property data including year built, building type, and permit portal links.
- * Version:      1.3.0
+ * Version:      1.4.0
  * Author:       Your Brokerage
  * License:      GPL-2.0+
  * Text Domain:  re-property-lookup
  * GitHub Plugin URI: https://github.com/falconwest/re-property-data
- * Primary Branch: main
+ * Primary Branch: master
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'RE_PLU_VERSION',  '1.3.0' );
+define( 'RE_PLU_VERSION',  '1.4.0' );
 define( 'RE_PLU_PATH',     plugin_dir_path( __FILE__ ) );
 define( 'RE_PLU_URL',      plugin_dir_url( __FILE__ ) );
 define( 'RE_PLU_BASENAME', plugin_basename( __FILE__ ) );

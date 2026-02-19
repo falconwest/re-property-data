@@ -30,20 +30,48 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
             <p class="re-plu-instructions"><?php echo $instructions; ?></p>
         <?php endif; ?>
 
-        <div class="re-plu-search-row">
-            <div class="re-plu-field re-plu-field-grow">
-                <label for="re-plu-address" class="re-plu-label">Property Address</label>
-                <div id="re-plu-address-wrapper">
-                    <input
-                        type="text"
-                        id="re-plu-address"
-                        class="re-plu-input"
-                        placeholder="e.g. 350 N Orleans St, Chicago, IL 60654"
-                        autocomplete="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                    >
-                </div>
+        <!-- Street Address -->
+        <div class="re-plu-field re-plu-field-street">
+            <label for="re-plu-street" class="re-plu-label">Street Address</label>
+            <input
+                type="text"
+                id="re-plu-street"
+                class="re-plu-input"
+                placeholder="e.g. 350 N Orleans St"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+            >
+        </div>
+
+        <!-- City / State / ZIP / Button -->
+        <div class="re-plu-addr-row2">
+            <div class="re-plu-field re-plu-field-city">
+                <label for="re-plu-city" class="re-plu-label">City</label>
+                <input type="text" id="re-plu-city" class="re-plu-input" placeholder="Chicago" autocomplete="off" autocorrect="off" spellcheck="false">
+            </div>
+            <div class="re-plu-field re-plu-field-state">
+                <label for="re-plu-state" class="re-plu-label">State</label>
+                <select id="re-plu-state" class="re-plu-input re-plu-select">
+                    <option value="">—</option>
+                    <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
+                    <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option>
+                    <option value="DC">DC</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option>
+                    <option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+                    <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option>
+                    <option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
+                    <option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+                    <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option>
+                    <option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option>
+                    <option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option>
+                    <option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option>
+                    <option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option>
+                    <option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+                </select>
+            </div>
+            <div class="re-plu-field re-plu-field-zip">
+                <label for="re-plu-zip" class="re-plu-label">ZIP Code</label>
+                <input type="text" id="re-plu-zip" class="re-plu-input" placeholder="60654" maxlength="10" autocomplete="off">
             </div>
             <div class="re-plu-search-action">
                 <button type="button" id="re-plu-lookup" class="re-plu-btn re-plu-btn-primary">
@@ -51,17 +79,6 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
                     <span class="re-plu-spinner" style="display:none;"></span>
                 </button>
             </div>
-        </div>
-
-        <!--
-            Override row — hidden until initRePlacesAutocomplete() reveals it.
-            If no Maps API key is configured, this row stays hidden permanently.
-        -->
-        <div id="re-plu-override-row" class="re-plu-override-row" style="display:none;" aria-live="polite">
-            <span id="re-plu-override-label" class="re-plu-override-label">Address not on Google Maps?</span>
-            <button type="button" id="re-plu-override-toggle-btn" class="re-plu-override-btn">
-                Enter manually
-            </button>
         </div>
 
         <div id="re-plu-lookup-error" class="re-plu-message re-plu-message-error" role="alert" style="display:none;"></div>
@@ -101,7 +118,7 @@ $instructions = esc_html( get_option( 're_plu_instructions', 'Enter a full prope
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
                     Public Permits &amp; Records
                 </h3>
-                <p class="re-plu-section-note">Links to official city/county permit portals and national databases.</p>
+                <p class="re-plu-section-note">Links to official city/county permit portals.</p>
             </div>
             <div id="re-plu-permits-section"></div>
         </div>

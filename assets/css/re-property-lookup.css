@@ -266,18 +266,39 @@
 }
 .re-plu-platform-btn.loopnet:hover { background: #253660; }
 
-/* ---- Search row ---- */
+/* ---- Search card / address fields ---- */
 .re-plu-search-card { padding-bottom: 20px; }
 
-.re-plu-search-row {
+/* Street address sits on its own full-width row */
+.re-plu-field-street {
+  margin-bottom: 10px;
+}
+
+/* City / State / ZIP / Button row */
+.re-plu-addr-row2 {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
 }
 
+.re-plu-field-city  { flex: 1 1 auto; min-width: 0; }
+.re-plu-field-state { flex: 0 0 80px; }
+.re-plu-field-zip   { flex: 0 0 110px; }
+
 .re-plu-search-action {
-  padding-top: 22px;  /* align with input (label height) */
+  padding-top: 22px;  /* align button with inputs (label height) */
   flex-shrink: 0;
+}
+
+/* State select — matches .re-plu-input appearance */
+.re-plu-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  padding-right: 28px;
+  cursor: pointer;
 }
 
 /* ---- Platform grid ---- */
@@ -660,14 +681,18 @@ gmp-place-autocomplete {
 
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
-  .re-plu-search-row {
-    flex-direction: column;
+  .re-plu-addr-row2 {
+    flex-wrap: wrap;
   }
-  .re-plu-search-action {
+  .re-plu-field-city  { flex: 1 1 100%; }
+  .re-plu-field-state { flex: 1 1 calc(50% - 5px); }
+  .re-plu-field-zip   { flex: 1 1 calc(50% - 5px); }
+  .re-plu-addr-row2 .re-plu-search-action {
+    flex: 1 1 100%;
     padding-top: 0;
     width: 100%;
   }
-  .re-plu-search-action .re-plu-btn {
+  .re-plu-addr-row2 .re-plu-search-action .re-plu-btn {
     width: 100%;
   }
   .re-plu-card {

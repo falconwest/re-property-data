@@ -396,30 +396,6 @@ class RE_PLU_Data_Fetcher {
             $links[] = array_merge( $city_portals[ $city_key ], [ 'type' => 'city' ] );
         }
 
-        /* ---- Always include PermitData.com (national aggregator) ---- */
-        $links[] = [
-            'label' => 'PermitData.com — National Permit Search',
-            'url'   => 'https://www.permitdata.com/',
-            'type'  => 'national',
-        ];
-
-        /* ---- OpenDataSoft building permits dataset ---- */
-        $search_term = $city ? $city . ' building permits' : 'building permits';
-        $links[] = [
-            'label' => 'OpenDataSoft — Building Permit Datasets',
-            'url'   => 'https://public.opendatasoft.com/explore/?q=' . rawurlencode( $search_term ) . '&sort=modified',
-            'type'  => 'national',
-        ];
-
-        /* ---- FOIA / public records note ---- */
-        if ( $city && $state ) {
-            $links[] = [
-                'label' => 'Submit a public records (FOIA) request — ' . esc_html( $city ) . ', ' . esc_html( $state ),
-                'url'   => 'https://www.google.com/search?q=' . rawurlencode( $city . ' ' . $state . ' building permit public records request' ),
-                'type'  => 'foia',
-            ];
-        }
-
         return $links;
     }
 }
