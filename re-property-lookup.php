@@ -22,7 +22,6 @@ define( 'RE_PLU_BASENAME', plugin_basename( __FILE__ ) );
 
 require_once RE_PLU_PATH . 'includes/class-re-admin.php';
 require_once RE_PLU_PATH . 'includes/class-re-url-generator.php';
-require_once RE_PLU_PATH . 'includes/class-re-data-fetcher.php';
 
 /**
  * Main plugin class — singleton.
@@ -206,26 +205,15 @@ class RE_Property_Lookup {
             wp_send_json_error( [ 'message' => 'Please enter a property address.' ] );
         }
 
-        /* Fetch property data first so Smarty components are available
-         * for building precise, address-specific platform URLs. */
-        $data_fetcher  = new RE_PLU_Data_Fetcher( $address );
-        $property_data = $data_fetcher->fetch_all_data();
-
-        $url_gen = new RE_PLU_URL_Generator(
-            $property_data['smarty_formatted'] ?? $address,
-            $property_data['smarty_components'] ?? null
-        );
-
-        $urls = [
-            'zillow'  => $url_gen->get_zillow_url(),
-            'redfin'  => $url_gen->get_redfin_url(),
-            'loopnet' => $url_gen->get_loopnet_url(),
-        ];
+        $url_gen = new RE_PLU_URL_Generator( $address );
 
         wp_send_json_success( [
-            'address'       => $address,
-            'urls'          => $urls,
-            'property_data' => $property_data,
+            'address' => $address,
+            'urls'    => [
+                'zillow'  => $url_gen->get_zillow_url(),
+                'redfin'  => $url_gen->get_redfin_url(),
+                'loopnet' => $url_gen->get_loopnet_url(),
+            ],
         ] );
     }
 

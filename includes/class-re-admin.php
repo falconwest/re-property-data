@@ -111,29 +111,6 @@ class RE_PLU_Admin {
             're_plu_integrations_section'
         );
 
-        register_setting( 're-property-lookup', 're_plu_smarty_auth_id', [
-            'sanitize_callback' => 'sanitize_text_field',
-        ] );
-
-        add_settings_field(
-            're_plu_smarty_auth_id',
-            'Smarty Auth ID',
-            [ $this, 'field_smarty_auth_id' ],
-            're-property-lookup',
-            're_plu_integrations_section'
-        );
-
-        register_setting( 're-property-lookup', 're_plu_smarty_auth_token', [
-            'sanitize_callback' => 'sanitize_text_field',
-        ] );
-
-        add_settings_field(
-            're_plu_smarty_auth_token',
-            'Smarty Auth Token',
-            [ $this, 'field_smarty_auth_token' ],
-            're-property-lookup',
-            're_plu_integrations_section'
-        );
     }
 
     /* -----------------------------------------------------------------------
@@ -183,7 +160,7 @@ class RE_PLU_Admin {
     }
 
     public function section_integrations_description() {
-        echo '<p>Connect Google Maps for address autocomplete and Smarty for address validation and standardization. Smarty improves the accuracy of platform links and unlocks address-level property data.</p>';
+        echo '<p>Connect Google Maps for address autocomplete. Leave blank to use plain text address entry.</p>';
     }
 
     public function field_gmaps_key() {
@@ -206,51 +183,6 @@ class RE_PLU_Admin {
             Requires <strong>Maps JavaScript API</strong> and <strong>Places API (New)</strong> enabled
             in your <a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>.
             Leave blank to disable autocomplete — free-text address entry will still work normally.
-        </p>
-        <?php
-    }
-
-    public function field_smarty_auth_id() {
-        $value   = get_option( 're_plu_smarty_auth_id', '' );
-        $has_val = ! empty( $value );
-        ?>
-        <input
-            type="text"
-            name="re_plu_smarty_auth_id"
-            class="regular-text"
-            value="<?php echo esc_attr( $value ); ?>"
-            placeholder="Your Smarty Auth ID"
-            autocomplete="off"
-            spellcheck="false"
-        >
-        <p class="description">
-            <?php if ( $has_val ) : ?>
-                <strong style="color:#2e7d32;">&#10003; Auth ID is set.</strong><br>
-            <?php endif; ?>
-            Found in your <a href="https://www.smarty.com/account/keys" target="_blank" rel="noopener noreferrer">Smarty account dashboard</a> under API Keys.
-            Use a <strong>Secret Key</strong> — this value is only used server-side and is never sent to the browser.
-        </p>
-        <?php
-    }
-
-    public function field_smarty_auth_token() {
-        $value   = get_option( 're_plu_smarty_auth_token', '' );
-        $has_val = ! empty( $value );
-        ?>
-        <input
-            type="password"
-            name="re_plu_smarty_auth_token"
-            class="regular-text"
-            value="<?php echo esc_attr( $value ); ?>"
-            placeholder="<?php echo $has_val ? 'Token is set — enter to replace' : 'Your Smarty Auth Token'; ?>"
-            autocomplete="new-password"
-        >
-        <p class="description">
-            <?php if ( $has_val ) : ?>
-                <strong style="color:#2e7d32;">&#10003; Auth Token is set.</strong>
-            <?php else : ?>
-                The secret token paired with the Auth ID above.
-            <?php endif; ?>
         </p>
         <?php
     }
@@ -339,11 +271,6 @@ class RE_PLU_Admin {
                             <td>Address Autocomplete</td>
                             <td>Google Maps Places API</td>
                             <td>Requires API key (see Integrations above). Falls back to free-text with override option.</td>
-                        </tr>
-                        <tr>
-                            <td>Address Validation &amp; Standardization</td>
-                            <td>Smarty US Street Address API</td>
-                            <td>Validates address, standardizes components, provides lat/lng, county, ZIP+4, and commercial/residential classification. Uses <strong>Secret Key</strong> — server-side only.</td>
                         </tr>
                         <tr>
                             <td>Platform Links</td>
