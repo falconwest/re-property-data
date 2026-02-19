@@ -17,45 +17,48 @@
  * ======================================================================= */
 
 window.initRePlacesAutocomplete = function () {
-    var wrapper    = document.getElementById( 're-plu-address-wrapper' );
-    var plainInput = document.getElementById( 're-plu-address' );
-    if ( ! wrapper || ! plainInput ) { return; }
+    var streetInput = document.getElementById( 're-plu-street' );
+    if ( ! streetInput ) { return; }
 
     try {
-        var placeEl = new google.maps.places.PlaceAutocompleteElement( {
+        var autocomplete = new google.maps.places.Autocomplete( streetInput, {
             types:                 [ 'address' ],
             componentRestrictions: { country: 'us' },
+            fields:                [ 'address_components' ],
         } );
-        placeEl.id = 're-plu-address-pac';
 
-        /* Insert before the plain input; hide the plain input (override fallback) */
-        wrapper.insertBefore( placeEl, plainInput );
-        plainInput.style.display = 'none';
+        autocomplete.addListener( 'place_changed', function () {
+            var place = autocomplete.getPlace();
+            if ( ! place || ! place.address_components ) { return; }
 
-        /* On place selection sync the formatted address to the plain input */
-        placeEl.addEventListener( 'gmp-select', function ( event ) {
-            var place = event.placePrediction.toPlace();
-            place.fetchFields( { fields: [ 'formattedAddress' ] } ).then( function () {
-                plainInput.value = place.formattedAddress;
+            var streetNumber = '', route = '', city = '', state = '', zip = '';
+
+            place.address_components.forEach( function ( c ) {
+                if ( c.types.indexOf( 'street_number' ) !== -1 ) { streetNumber = c.long_name; }
+                if ( c.types.indexOf( 'route' ) !== -1 )          { route        = c.long_name; }
+                if ( c.types.indexOf( 'locality' ) !== -1 )        { city         = c.long_name; }
+                if ( c.types.indexOf( 'administrative_area_level_1' ) !== -1 ) { state = c.short_name; }
+                if ( c.types.indexOf( 'postal_code' ) !== -1 )     { zip          = c.long_name; }
             } );
-            if ( window.rePluOverrideActive ) {
-                window.rePluDisableOverride();
-            }
+
+            /* Set street input to just the street portion */
+            streetInput.value = streetNumber ? ( streetNumber + ' ' + route ) : route;
+
+            /* Populate the other fields */
+            var cityEl  = document.getElementById( 're-plu-city' );
+            var stateEl = document.getElementById( 're-plu-state' );
+            var zipEl   = document.getElementById( 're-plu-zip' );
+            if ( cityEl )  { cityEl.value  = city;  }
+            if ( stateEl ) { stateEl.value = state; }
+            if ( zipEl )   { zipEl.value   = zip;   }
         } );
 
-        window.rePlacesAutocomplete = placeEl;
-
-        /* Reveal the override row now that autocomplete is live */
-        var overrideRow = document.getElementById( 're-plu-override-row' );
-        if ( overrideRow ) { overrideRow.style.display = 'flex'; }
+        window.rePlacesAutocomplete = autocomplete;
 
     } catch ( e ) {
         /*
-         * Maps API failed to initialize — degrade gracefully: the plain input
-         * works as free-text and the lookup continues without autocomplete.
-         *
-         * Fix: add this site's domain to the API key's allowed HTTP referrers
-         * in Google Cloud Console → APIs & Services → Credentials.
+         * Maps API failed to initialize — degrade gracefully: all four fields
+         * work as plain text inputs and the lookup continues without autocomplete.
          */
         console.warn( '[RE Property Lookup] Google Maps autocomplete failed — falling back to plain text input.', e.message || e );
     }
@@ -89,26 +92,27 @@ window.initRePlacesAutocomplete = function () {
             .show();
     }
 
-    /* Read the address from whichever input is currently active */
+    /* Assemble address from the four separate fields */
     function getAddressValue() {
-        var placeEl = document.getElementById( 're-plu-address-pac' );
-        if ( placeEl && placeEl.style.display !== 'none' ) {
-            /* Autocomplete mode: read directly from the element's text value */
-            return ( placeEl.value || '' ).trim();
-        }
-        /* Override / no-Maps mode */
-        var plain = document.getElementById( 're-plu-address' );
-        return plain ? plain.value.trim() : '';
+        var street = ( ( document.getElementById( 're-plu-street' ) || {} ).value || '' ).trim();
+        var city   = ( ( document.getElementById( 're-plu-city' )   || {} ).value || '' ).trim();
+        var state  = ( ( document.getElementById( 're-plu-state' )  || {} ).value || '' ).trim();
+        var zip    = ( ( document.getElementById( 're-plu-zip' )    || {} ).value || '' ).trim();
+
+        if ( ! street ) { return ''; }
+
+        /* Build: "350 N Orleans St, Chicago, IL 60654" */
+        var address = street;
+        if ( city )  { address += ', ' + city; }
+        if ( state ) { address += ', ' + state; }
+        if ( zip )   { address += ' ' + zip; }
+
+        return address;
     }
 
     function focusAddressInput() {
-        var placeEl = document.getElementById( 're-plu-address-pac' );
-        if ( placeEl && placeEl.style.display !== 'none' ) {
-            try { placeEl.focus(); } catch ( e ) {}
-            return;
-        }
-        var plain = document.getElementById( 're-plu-address' );
-        if ( plain ) { plain.focus(); }
+        var el = document.getElementById( 're-plu-street' );
+        if ( el ) { el.focus(); }
     }
 
     /* -----------------------------------------------------------------------
@@ -168,54 +172,6 @@ window.initRePlacesAutocomplete = function () {
     } );
 
     /* -----------------------------------------------------------------------
-     * Override toggle
-     *
-     * When PlaceAutocompleteElement is active, team members can click
-     * "Enter manually" to bypass it for addresses not in Google's database.
-     * The toggle hides the autocomplete element, shows the plain text input,
-     * and can be reversed.
-     * -------------------------------------------------------------------- */
-
-    window.rePluOverrideActive = false;
-
-    window.rePluEnableOverride = function () {
-        window.rePluOverrideActive = true;
-        var placeEl    = document.getElementById( 're-plu-address-pac' );
-        var plainInput = document.getElementById( 're-plu-address' );
-        if ( placeEl )    { placeEl.style.display = 'none'; }
-        if ( plainInput ) {
-            plainInput.style.display = '';
-            plainInput.classList.add( 're-plu-input--override' );
-            plainInput.focus();
-        }
-        $( 'body' ).addClass( 're-plu-override-active' );
-        $( '#re-plu-override-toggle-btn' ).text( 'Restore autocomplete' ).addClass( 're-plu-override-restore' );
-        $( '#re-plu-override-label' ).text( 'Manual entry active —' );
-    };
-
-    window.rePluDisableOverride = function () {
-        window.rePluOverrideActive = false;
-        var placeEl    = document.getElementById( 're-plu-address-pac' );
-        var plainInput = document.getElementById( 're-plu-address' );
-        if ( placeEl )    { placeEl.style.display = ''; }
-        if ( plainInput ) {
-            plainInput.style.display = 'none';
-            plainInput.classList.remove( 're-plu-input--override' );
-        }
-        $( 'body' ).removeClass( 're-plu-override-active' );
-        $( '#re-plu-override-toggle-btn' ).text( 'Enter manually' ).removeClass( 're-plu-override-restore' );
-        $( '#re-plu-override-label' ).text( 'Address not on Google Maps?' );
-    };
-
-    $( document ).on( 'click', '#re-plu-override-toggle-btn', function () {
-        if ( window.rePluOverrideActive ) {
-            window.rePluDisableOverride();
-        } else {
-            window.rePluEnableOverride();
-        }
-    } );
-
-    /* -----------------------------------------------------------------------
      * Property lookup
      * -------------------------------------------------------------------- */
 
@@ -223,8 +179,8 @@ window.initRePlacesAutocomplete = function () {
         runLookup();
     } );
 
-    /* Enter key on the plain input (override / no-Maps mode) */
-    $( '#re-plu-address' ).on( 'keydown', function ( e ) {
+    /* Enter key on any address text field triggers lookup */
+    $( '#re-plu-street, #re-plu-city, #re-plu-zip' ).on( 'keydown', function ( e ) {
         if ( e.key === 'Enter' ) { runLookup(); }
     } );
 
@@ -236,7 +192,7 @@ window.initRePlacesAutocomplete = function () {
         var address = getAddressValue();
 
         if ( ! address ) {
-            $err.text( 'Please enter a property address.' ).show();
+            $err.text( 'Please enter a street address.' ).show();
             focusAddressInput();
             return;
         }
@@ -468,7 +424,7 @@ window.initRePlacesAutocomplete = function () {
     function renderPermits( permits ) {
         if ( ! permits || ! permits.length ) {
             $( '#re-plu-permits-section' ).html(
-                '<p style="color:var(--re-gray-400);font-size:13px;margin:0;">No permit portals found for this location. Try searching PermitData.com directly.</p>'
+                '<p style="color:var(--re-gray-400);font-size:13px;margin:0;">No permit portals found for this location.</p>'
             );
             return;
         }
